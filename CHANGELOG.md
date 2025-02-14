@@ -11,3 +11,7 @@ add more toast properties
   fixing calling context directly from the packages
 
 - Version 0.2.2
+
+- Version 0.2.3
+
+  fixing bugs

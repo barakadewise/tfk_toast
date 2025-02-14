@@ -132,9 +132,11 @@ class AnimatedToastWidgetState extends State<AnimatedToastWidget>
     _controller.forward();
 
     Future.delayed(widget.duration, () {
-      _controller.reverse().then((_) {
-        widget.onRemove();
-      });
+      if (mounted) {
+        _controller.reverse().then((_) {
+          if (mounted) widget.onRemove();
+        });
+      }
     });
   }
 
@@ -192,7 +194,7 @@ class AnimatedToastWidgetState extends State<AnimatedToastWidget>
                         ),
                   ),
                   // Check if it's a progress toast
-                  if (widget.isProgress) 
+                  if (widget.isProgress)
                     Padding(
                       padding: const EdgeInsets.only(
                           top: 8.0), // Add padding for the progress bar
@@ -218,9 +220,11 @@ class AnimatedToastWidgetState extends State<AnimatedToastWidget>
               IconButton(
                 icon: const Icon(Icons.close, color: Colors.white),
                 onPressed: () {
-                  _controller.reverse().then((_) {
-                    widget.onRemove();
-                  });
+                  if (mounted) {
+                    _controller.reverse().then((_) {
+                      if (mounted) widget.onRemove();
+                    });
+                  }
                 },
               ),
           ],
