@@ -15,3 +15,7 @@ add more toast properties
 - Version 0.2.3
 
   fixing bugs
+
+- Version 0.2.4
+
+  fixing bugs
