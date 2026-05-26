@@ -6,200 +6,155 @@ void main() {
   runApp(const MyApp());
 }
 
+/// ======================================================
+/// APP ROOT
+/// Uses ONLY global navigatorKey (no context passed)
+/// ======================================================
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      /***********  INITIALIZE THE TOAST KEY HERE */
-      navigatorKey: TfkToast.navigatorKey, //
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Custom Toast Example'),
-          backgroundColor: Colors.blue,
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text("SIMPLE TOAST POSTIONS EXAMPLE"),
-              Builder(builder: (context) {
-                return Wrap(
-                  spacing: 10.0,
-                  runSpacing: 10.0,
-                  children: [
-                    /*********  TOP TOAST EXAMPLE *******/
-                    ElevatedButton(
-                      onPressed: () {
-                        TfkToast.showToast(
-                          "This is  toast title message!",
-                          title: "Toast Title",
-                          position: ToastPosition.top,
-                          icon: const Icon(
-                            Icons.info,
-                            color: Colors.white,
-                          ),
-                          backgroundColor: Colors.pinkAccent,
-                          showIndicator: true,
-                        );
-                      },
-                      child: const Text("Top Toast"),
-                    ),
-                    /*********  BOTTOM TOAST EXAMPLE *******/
-                    ElevatedButton(
-                      onPressed: () {
-                        TfkToast.showToast(
-                          "This is  toast title message!",
-                          title: "Toast Title",
-                          type: ToastType.info,
-                          position: ToastPosition.bottom,
-                          icon: const Icon(
-                            Icons.info,
-                            color: Colors.white,
-                          ),
-                        );
-                      },
-                      child: const Text("Bottom Toast"),
-                    ),
-                    /*********  CENTER TOAST EXAMPLE *******/
-                    ElevatedButton(
-                      onPressed: () {
-                        TfkToast.showToast(
-                          "This is  toast title message!",
-                          title: "Toast Title",
-                          type: ToastType.info,
-                          position: ToastPosition.center,
-                          icon: const Icon(
-                            Icons.info,
-                            color: Colors.white,
-                          ),
-                        );
-                      },
-                      child: const Text("Center Toast"),
-                    )
-                  ],
-                );
-              }),
-              const Divider(),
-              const Text(
-                "SIMPLE TOAST ANIMATION EXAMPLE",
-                style: TextStyle(
-                    color: Colors.orange, fontWeight: FontWeight.bold),
-              ),
-              Builder(builder: (context) {
-                return Wrap(
-                  spacing: 10.0,
-                  runSpacing: 10.0,
-                  children: [
-                    /*********  TOP TOAST FADE ANIMATION EXAMPLE *******/
-                    ElevatedButton(
-                      onPressed: () {
-                        TfkToast.showToast(
-                          "This is  toast title message!",
-                          title: "Toast Title",
-                          type: ToastType.warning,
-                          position: ToastPosition.top,
-                          animation: ToastAnimation.fade,
-                          icon: const Icon(
-                            Icons.info,
-                            color: Colors.white,
-                          ),
-                        );
-                      },
-                      child: const Text("Fade Toast"),
-                    ),
-                    /*********  TOP TOAST SCALE ANIMATIOLN EXAMPLE *******/
-                    ElevatedButton(
-                      onPressed: () {
-                        TfkToast.showToast(
-                          "This is  toast title message!",
-                          title: "Toast Title",
-                          type: ToastType.warning,
-                          position: ToastPosition.top,
-                          animation: ToastAnimation.scale,
-                          icon: const Icon(
-                            Icons.info,
-                            color: Colors.white,
-                          ),
-                        );
-                      },
-                      child: const Text("Scale Toast"),
-                    ),
-                    /*********  TOP TOAST BOUNCE EXAMPLE *******/
-                    ElevatedButton(
-                      onPressed: () {
-                        TfkToast.showToast(
-                          "This is  toast title message!",
-                          title: "Toast Title",
-                          type: ToastType.warning,
-                          position: ToastPosition.top,
-                          animation: ToastAnimation.bounce,
-                          icon: const Icon(
-                            Icons.info,
-                            color: Colors.white,
-                          ),
-                        );
-                      },
-                      child: const Text("Bounce Toast"),
-                    ),
+      navigatorKey: TfkToast.navigatorKey,
+      home: const GlobalToastPage(),
+    );
+  }
+}
 
-                    /*********  TOP TOAST SLIDE EXAMPLE *******/
+/// ======================================================
+/// PAGE 1
+/// GLOBAL CONTEXT TOAST (NO BuildContext USED)
+/// ======================================================
+class GlobalToastPage extends StatelessWidget {
+  const GlobalToastPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Global Toast Page"),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text("GLOBAL CONTEXT TOASTS"),
+            ElevatedButton(
+              onPressed: () {
+                TfkToast.showToast(
+                  "This toast uses global navigatorKey only",
+                  title: "Global Toast",
+                  position: ToastPosition.top,
+                  type: ToastType.info,
+                );
+              },
+              child: const Text("Top Toast (Global)"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                TfkToast.showToast(
+                  "Bottom global toast",
+                  title: "Global",
+                  position: ToastPosition.bottom,
+                  type: ToastType.success,
+                );
+              },
+              child: const Text("Bottom Toast (Global)"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                TfkToast.showToast(
+                  "Center global toast",
+                  title: "Global",
+                  position: ToastPosition.center,
+                  type: ToastType.warning,
+                );
+              },
+              child: const Text("Center Toast (Global)"),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const LocalToastPage(),
+                  ),
+                );
+              },
+              child: const Text("Go to Local Context Page"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// ======================================================
+/// PAGE 2
+/// LOCAL CONTEXT TOAST (USES BuildContext)
+/// ======================================================
+class LocalToastPage extends StatelessWidget {
+  const LocalToastPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Local Toast Page"),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text("LOCAL CONTEXT TOASTS"),
+            Builder(
+              builder: (ctx) {
+                return Column(
+                  children: [
                     ElevatedButton(
                       onPressed: () {
                         TfkToast.showToast(
-                          "This is  toast title message!",
-                          title: "Toast Title",
-                          type: ToastType.warning,
+                          "Toast using BuildContext",
+                          context: ctx,
+                          title: "Local Toast",
+                          type: ToastType.info,
                           position: ToastPosition.top,
-                          animation: ToastAnimation.slide,
-                          icon: const Icon(
-                            Icons.info,
-                            color: Colors.white,
-                          ),
                         );
                       },
-                      child: const Text("Slide Toast"),
+                      child: const Text("Top Toast (Context)"),
                     ),
-                    /*********  TOP TOAST WOBBLE EXAMPLE *******/
                     ElevatedButton(
                       onPressed: () {
                         TfkToast.showToast(
-                          "This is  toast title message!",
-                          title: "Toast Title",
-                          type: ToastType.warning,
-                          position: ToastPosition.top,
-                          animation: ToastAnimation.wobble,
-                          icon: const Icon(
-                            Icons.info,
-                            color: Colors.white,
-                          ),
+                          "Bottom context toast",
+                          context: ctx,
+                          title: "Local",
+                          type: ToastType.success,
+                          position: ToastPosition.bottom,
                         );
                       },
-                      child: const Text("Wobble Toast"),
+                      child: const Text("Bottom Toast (Context)"),
                     ),
-                    /*********  TOP TOAST ROTATE EXAMPLE *******/
                     ElevatedButton(
                       onPressed: () {
                         TfkToast.showToast(
-                          "This is  toast title message!",
-                          title: "Toast Title",
+                          "Center context toast",
+                          context: ctx,
+                          title: "Local",
                           type: ToastType.warning,
-                          position: ToastPosition.top,
-                          animation: ToastAnimation.rotate,
-                          icon: const Icon(
-                            Icons.info,
-                            color: Colors.white,
-                          ),
+                          position: ToastPosition.center,
                         );
                       },
-                      child: const Text("Rotate Toast"),
-                    )
+                      child: const Text("Center Toast (Context)"),
+                    ),
                   ],
                 );
-              }),
-            ],
-          ),
+              },
+            ),
+          ],
         ),
       ),
     );
