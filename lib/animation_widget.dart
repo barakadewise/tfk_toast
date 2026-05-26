@@ -159,7 +159,7 @@ class AnimatedToastWidgetState extends State<AnimatedToastWidget>
           boxShadow: [
             if (widget.elevation > 0)
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 offset: Offset(0, widget.elevation),
                 blurRadius: widget.elevation,
               ),
@@ -258,7 +258,7 @@ class AnimatedToastWidgetState extends State<AnimatedToastWidget>
           },
           child: toastContent,
         );
-      case ToastAnimation.none:
+      // case ToastAnimation.none:
       default:
         return toastContent;
     }
@@ -279,8 +279,6 @@ class AnimatedToastWidgetState extends State<AnimatedToastWidget>
         return Colors.red;
       case ToastType.success:
         return Colors.green;
-      default:
-        return Colors.black;
     }
   }
 }
