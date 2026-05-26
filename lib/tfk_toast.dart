@@ -4,39 +4,66 @@ import 'package:tfk_toast/animation_widget.dart';
 import 'package:tfk_toast/enum.dart';
 import 'package:tfk_toast/toast_queue.dart';
 
-class TfkToast {
-  /// Global navigator key (optional fallback).
-  /// This is NOT required if BuildContext is provided.
-  static final navigatorKey = GlobalKey<NavigatorState>();
+import 'dart:collection';
+import 'package:flutter/material.dart';
 
-  // Toast queue
+/// ======================================================
+/// TfkToast
+///
+/// A global toast system for Flutter apps.
+///
+/// FEATURES:
+/// - Works with or without BuildContext
+/// - Supports GoRouter + MaterialApp navigation
+/// - Overlay-based rendering (no Scaffold dependency)
+/// - Queue system (prevents multiple overlapping toasts)
+/// - Safe fallback using navigatorKey
+///
+/// PRIORITY:
+/// 1. BuildContext (best option)
+/// 2. navigatorKey (fallback)
+/// 3. Safe fail (no crash)
+/// ======================================================
+class TfkToast {
+  /// -----------------------------------------------------
+  /// GLOBAL NAVIGATOR KEY (FALLBACK)
+  ///
+  /// This should be assigned from your app root:
+  ///
+  /// void main() {
+  ///   TfkToast.navigatorKey = rootNavigatorKey;
+  ///   runApp(MyApp());
+  /// }
+  ///
+  /// OR:
+  /// MaterialApp(navigatorKey: rootNavigatorKey)
+  /// GoRouter(navigatorKey: rootNavigatorKey)
+  /// -----------------------------------------------------
+  static GlobalKey<NavigatorState>? navigatorKey;
+
+  /// -----------------------------------------------------
+  /// INTERNAL TOAST QUEUE
+  ///
+  /// Ensures toasts are shown one at a time in order.
+  /// Prevents overlapping UI glitches.
+  /// -----------------------------------------------------
   static final Queue<ToastEntry> _toastQueue = Queue<ToastEntry>();
 
-  // Flag to track if a toast is currently active
+  /// Tracks whether a toast is currently visible.
   static bool _isToastActive = false;
 
-  /// Displays a custom toast notification.
+  /// -----------------------------------------------------
+  /// PUBLIC API: SHOW TOAST
   ///
-  /// The toast message will be shown with the specified parameters, allowing
-  /// for a high degree of customization.
+  /// Example:
   ///
-  /// * [context] : The `BuildContext` in which to show the toast (optional).
-  /// * [message] : The main message of the toast.
-  /// * [type] : The type of toast, determining the color and style.
-  /// * [position] : The position on the screen where the toast will appear.
-  /// * [duration] : The duration for which the toast will be visible.
-  /// * [title] : An optional title for the toast, displayed above the message.
-  /// * [showCloseIcon] : Whether to show a close icon on the toast.
-  /// * [animation] : The animation used when showing and hiding the toast.
-  /// * [messageStyle] : Custom text style for the message.
-  /// * [titleStyle] : Custom text style for the title.
-  /// * [padding] : Padding around the toast content.
-  /// * [borderRadius] : The border radius of the toast container.
-  /// * [elevation] : The elevation (shadow) of the toast container.
-  /// * [icon] : An optional icon to display alongside the message.
-  /// * [onTap] : A callback that triggers when the toast is tapped.
-  /// * [backgroundColor] : The background color of the toast.
-
+  /// TfkToast.showToast(
+  ///   "Order placed successfully",
+  ///   type: ToastType.success,
+  /// );
+  ///
+  /// You can optionally pass BuildContext.
+  /// -----------------------------------------------------
   static void showToast(
     String message, {
     BuildContext? context,
@@ -57,7 +84,7 @@ class TfkToast {
     double? progress,
     bool showIndicator = false,
   }) {
-    // Add toast to queue
+    // Add toast request to queue
     _toastQueue.add(
       ToastEntry(
         message: message,
@@ -80,17 +107,20 @@ class TfkToast {
       ),
     );
 
-    // Start processing queue
+    // Start queue processing if idle
     if (!_isToastActive) {
       _showNextToast(context);
     }
   }
 
-  /// Shows next toast in queue
-  /// Priority:
-  /// 1. BuildContext (preferred)
-  /// 2. navigatorKey (optional fallback)
-  /// 3. Safe fail (no crash)
+  /// -----------------------------------------------------
+  /// INTERNAL: PROCESS TOAST QUEUE
+  ///
+  /// Handles:
+  /// - Overlay creation
+  /// - Context fallback resolution
+  /// - Auto dismissal
+  /// -----------------------------------------------------
   static void _showNextToast(BuildContext? context) {
     if (_toastQueue.isEmpty) return;
 
@@ -113,11 +143,14 @@ class TfkToast {
             title: toast.title,
             showCloseIcon: toast.showCloseIcon,
             animation: toast.animation,
+
+            /// When toast finishes or is closed
             onRemove: () {
               overlayEntry.remove();
               _isToastActive = false;
               _showNextToast(context);
             },
+
             messageStyle: toast.messageStyle,
             titleStyle: toast.titleStyle,
             padding: toast.padding,
@@ -135,26 +168,28 @@ class TfkToast {
 
     OverlayState? overlay;
 
-    //  Try context first (preferred)
+    /// STEP 1: Try BuildContext (preferred)
     if (context != null) {
       overlay = Overlay.of(context, rootOverlay: true);
     }
 
-    // Fallback to navigatorKey
-    overlay ??= navigatorKey.currentState?.overlay;
+    /// STEP 2: Fallback to navigatorKey
+    overlay ??= navigatorKey?.currentState?.overlay;
 
-    // Safe failure handling
+    /// STEP 3: Safe failure (no crash)
     if (overlay == null) {
       debugPrint(
         '[TfkToast ERROR] No overlay found. '
-        'Provide BuildContext or optionally set navigatorKey in MaterialApp.',
+        'Provide BuildContext or set navigatorKey in GoRouter/MaterialApp.',
       );
       _isToastActive = false;
       return;
     }
 
+    /// Insert toast into overlay
     overlay.insert(overlayEntry);
 
+    /// Auto remove after duration
     Future.delayed(toast.duration, () {
       if (_isToastActive) {
         overlayEntry.remove();
@@ -164,13 +199,19 @@ class TfkToast {
     });
   }
 
-  /// Returns vertical position for toast placement
+  /// -----------------------------------------------------
+  /// POSITION HELPER
+  ///
+  /// Controls where toast appears on screen
+  /// -----------------------------------------------------
   static double _getPosition(BuildContext context, ToastPosition position) {
     switch (position) {
       case ToastPosition.top:
         return 50.0;
+
       case ToastPosition.center:
         return MediaQuery.of(context).size.height / 2 - 50.0;
+
       case ToastPosition.bottom:
         return MediaQuery.of(context).size.height - 150.0;
     }
