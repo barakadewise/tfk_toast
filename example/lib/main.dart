@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:tfk_toast/enum.dart';
 import 'package:tfk_toast/tfk_toast.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() {
+  TfkToast.navigatorKey = navigatorKey;
   runApp(const MyApp());
 }
 
@@ -10,14 +13,25 @@ void main() {
 /// APP ROOT
 /// Uses ONLY global navigatorKey (no context passed)
 /// ======================================================
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       navigatorKey: navigatorKey,
+//       home: GlobalToastPage(),
+//     );
+//   }
+// }
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: TfkToast.navigatorKey,
-      home: const GlobalToastPage(),
+    return MaterialApp.router(
+      routerConfig: goRouter,
     );
   }
 }
@@ -74,6 +88,27 @@ class GlobalToastPage extends StatelessWidget {
               child: const Text("Center Toast (Global)"),
             ),
             const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                // TfkToast.showToast(
+                //   "Globall Navigating to other page",
+                //   title: "Global",
+                //   position: ToastPosition.top,
+                //   type: ToastType.success,
+                // );
+                 TfkToast.showToast(
+                  "Navigate after toast",
+                  type: ToastType.success,
+                );
+
+                context.go('/success');
+                // Navigator.push(
+                //     context,
+                //     MaterialPageRoute(
+                //         builder: (_) => const SuccessToastPage()));
+              },
+              child: const Text("Navigate to othe rpage with toast"),
+            ),
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
@@ -160,3 +195,36 @@ class LocalToastPage extends StatelessWidget {
     );
   }
 }
+
+class SuccessToastPage extends StatelessWidget {
+  const SuccessToastPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: Text("Navigated to success page"),
+      ),
+    );
+  }
+}
+
+
+final goRouter = GoRouter(
+  navigatorKey: navigatorKey,
+  initialLocation: '/home',
+  routes: [
+    GoRoute(
+      path: '/home',
+      builder: (context, state) => const GlobalToastPage(),
+    ),
+    GoRoute(
+      path: '/local',
+      builder: (context, state) => const LocalToastPage(),
+    ),
+    GoRoute(
+      path: '/success',
+      builder: (context, state) => const SuccessToastPage(),
+    ),
+  ],
+);
