@@ -3,38 +3,63 @@ import 'package:go_router/go_router.dart';
 import 'package:tfk_toast/enum.dart';
 import 'package:tfk_toast/tfk_toast.dart';
 
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+//initilization using material app
+// ======================================================
+// 1. SETUP WITH MATERIAL APP
+// ======================================================
+
 void main() {
-  TfkToast.navigatorKey = navigatorKey;
   runApp(const MyApp());
 }
-
-/// ======================================================
-/// APP ROOT
-/// Uses ONLY global navigatorKey (no context passed)
-/// ======================================================
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       navigatorKey: navigatorKey,
-//       home: GlobalToastPage(),
-//     );
-//   }
-// }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      routerConfig: goRouter,
+    return MaterialApp(
+      // Attach navigator key for global toast support
+      navigatorKey: TfkToast.navigatorKey,
+      home: const GlobalToastPage(),
     );
   }
 }
+
+///initilization with go route
+// ======================================================
+// 2. SETUP WITH GO ROUTER
+// ======================================================
+
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
+void main() {
+  // Attach GoRouter navigator key to toast system
+  TfkToast.appNavigatorKey = rootNavigatorKey;
+
+  runApp(const GoApp());
+}
+
+class GoApp extends StatelessWidget {
+  const GoApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      routerConfig: router,
+    );
+  }
+}
+
+final GoRouter router = GoRouter(
+  navigatorKey: rootNavigatorKey,
+  initialLocation: '/home',
+  routes: [
+    GoRoute(
+      path: '/home',
+      builder: (context, state) => const GlobalToastPage(),
+    ),
+  ],
+);
 
 /// ======================================================
 /// PAGE 1
@@ -96,16 +121,16 @@ class GlobalToastPage extends StatelessWidget {
                 //   position: ToastPosition.top,
                 //   type: ToastType.success,
                 // );
-                 TfkToast.showToast(
+                TfkToast.showToast(
                   "Navigate after toast",
                   type: ToastType.success,
                 );
 
-                context.go('/success');
-                // Navigator.push(
-                //     context,
-                //     MaterialPageRoute(
-                //         builder: (_) => const SuccessToastPage()));
+                // context.go('/success');
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const SuccessToastPage()));
               },
               child: const Text("Navigate to othe rpage with toast"),
             ),
@@ -130,6 +155,7 @@ class GlobalToastPage extends StatelessWidget {
 /// ======================================================
 /// PAGE 2
 /// LOCAL CONTEXT TOAST (USES BuildContext)
+/// THE TOATS WILL ONLY APPER ON THE BULD SCREEN TREE BEFORE MOUNTED
 /// ======================================================
 class LocalToastPage extends StatelessWidget {
   const LocalToastPage({super.key});
@@ -208,23 +234,3 @@ class SuccessToastPage extends StatelessWidget {
     );
   }
 }
-
-
-final goRouter = GoRouter(
-  navigatorKey: navigatorKey,
-  initialLocation: '/home',
-  routes: [
-    GoRoute(
-      path: '/home',
-      builder: (context, state) => const GlobalToastPage(),
-    ),
-    GoRoute(
-      path: '/local',
-      builder: (context, state) => const LocalToastPage(),
-    ),
-    GoRoute(
-      path: '/success',
-      builder: (context, state) => const SuccessToastPage(),
-    ),
-  ],
-);

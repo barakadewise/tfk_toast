@@ -10,60 +10,54 @@ import 'package:flutter/material.dart';
 /// ======================================================
 /// TfkToast
 ///
-/// A global toast system for Flutter apps.
+/// A simple global toast system for Flutter.
 ///
-/// FEATURES:
-/// - Works with or without BuildContext
-/// - Supports GoRouter + MaterialApp navigation
-/// - Overlay-based rendering (no Scaffold dependency)
-/// - Queue system (prevents multiple overlapping toasts)
-/// - Safe fallback using navigatorKey
+/// This package shows non-intrusive toast messages
+/// anywhere in your app, even during navigation.
 ///
-/// PRIORITY:
-/// 1. BuildContext (best option)
-/// 2. navigatorKey (fallback)
+/// It works with:
+/// - MaterialApp
+/// - GoRouter
+/// - Navigator 1.0 / 2.0
+///
+/// ------------------------------------------------------
+/// HOW IT WORKS
+///
+/// Priority for showing toast:
+/// 1. BuildContext (best and most reliable)
+/// 2. Global navigatorKey (fallback)
 /// 3. Safe fail (no crash)
 /// ======================================================
 class TfkToast {
-  /// -----------------------------------------------------
-  /// GLOBAL NAVIGATOR KEY (FALLBACK)
-  ///
-  /// This should be assigned from your app root:
-  ///
-  /// void main() {
-  ///   TfkToast.navigatorKey = rootNavigatorKey;
-  ///   runApp(MyApp());
-  /// }
-  ///
-  /// OR:
-  /// MaterialApp(navigatorKey: rootNavigatorKey)
-  /// GoRouter(navigatorKey: rootNavigatorKey)
-  /// -----------------------------------------------------
-  static GlobalKey<NavigatorState>? navigatorKey;
+  /// Global navigator key fallback (optional).
+  /// Used when BuildContext is not available.
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
-  /// -----------------------------------------------------
-  /// INTERNAL TOAST QUEUE
-  ///
-  /// Ensures toasts are shown one at a time in order.
-  /// Prevents overlapping UI glitches.
-  /// -----------------------------------------------------
+  /// Optional app-provided navigator key (GoRouter / MaterialApp)
+  static GlobalKey<NavigatorState>? appNavigatorKey;
+
+  /// Active key used internally
+  static GlobalKey<NavigatorState> get _activeKey =>
+      appNavigatorKey ?? navigatorKey;
+
+  /// Internal queue to show one toast at a time
   static final Queue<ToastEntry> _toastQueue = Queue<ToastEntry>();
 
-  /// Tracks whether a toast is currently visible.
   static bool _isToastActive = false;
 
-  /// -----------------------------------------------------
-  /// PUBLIC API: SHOW TOAST
+  /// ======================================================
+  /// SHOW TOAST
   ///
   /// Example:
   ///
+  /// ```dart
   /// TfkToast.showToast(
   ///   "Order placed successfully",
   ///   type: ToastType.success,
   /// );
-  ///
-  /// You can optionally pass BuildContext.
-  /// -----------------------------------------------------
+  /// ```
+  /// ======================================================
   static void showToast(
     String message, {
     BuildContext? context,
@@ -84,7 +78,6 @@ class TfkToast {
     double? progress,
     bool showIndicator = false,
   }) {
-    // Add toast request to queue
     _toastQueue.add(
       ToastEntry(
         message: message,
@@ -107,20 +100,12 @@ class TfkToast {
       ),
     );
 
-    // Start queue processing if idle
     if (!_isToastActive) {
       _showNextToast(context);
     }
   }
 
-  /// -----------------------------------------------------
-  /// INTERNAL: PROCESS TOAST QUEUE
-  ///
-  /// Handles:
-  /// - Overlay creation
-  /// - Context fallback resolution
-  /// - Auto dismissal
-  /// -----------------------------------------------------
+  /// Internal: shows next toast in queue
   static void _showNextToast(BuildContext? context) {
     if (_toastQueue.isEmpty) return;
 
@@ -143,14 +128,11 @@ class TfkToast {
             title: toast.title,
             showCloseIcon: toast.showCloseIcon,
             animation: toast.animation,
-
-            /// When toast finishes or is closed
             onRemove: () {
               overlayEntry.remove();
               _isToastActive = false;
               _showNextToast(context);
             },
-
             messageStyle: toast.messageStyle,
             titleStyle: toast.titleStyle,
             padding: toast.padding,
@@ -168,28 +150,26 @@ class TfkToast {
 
     OverlayState? overlay;
 
-    /// STEP 1: Try BuildContext (preferred)
+    /// Try BuildContext first
     if (context != null) {
       overlay = Overlay.of(context, rootOverlay: true);
     }
 
-    /// STEP 2: Fallback to navigatorKey
-    overlay ??= navigatorKey?.currentState?.overlay;
+    /// Fallback to navigatorKey
+    overlay ??= _activeKey.currentState?.overlay;
 
-    /// STEP 3: Safe failure (no crash)
+    /// Safe failure
     if (overlay == null) {
       debugPrint(
-        '[TfkToast ERROR] No overlay found. '
-        'Provide BuildContext or set navigatorKey in GoRouter/MaterialApp.',
+        '[TfkToast] No overlay found. '
+        'Provide context or set navigatorKey in MaterialApp/GoRouter.',
       );
       _isToastActive = false;
       return;
     }
 
-    /// Insert toast into overlay
     overlay.insert(overlayEntry);
 
-    /// Auto remove after duration
     Future.delayed(toast.duration, () {
       if (_isToastActive) {
         overlayEntry.remove();
@@ -199,21 +179,17 @@ class TfkToast {
     });
   }
 
-  /// -----------------------------------------------------
-  /// POSITION HELPER
-  ///
-  /// Controls where toast appears on screen
-  /// -----------------------------------------------------
+  /// Controls toast position
   static double _getPosition(BuildContext context, ToastPosition position) {
     switch (position) {
       case ToastPosition.top:
-        return 50.0;
+        return 50;
 
       case ToastPosition.center:
-        return MediaQuery.of(context).size.height / 2 - 50.0;
+        return MediaQuery.of(context).size.height / 2 - 50;
 
       case ToastPosition.bottom:
-        return MediaQuery.of(context).size.height - 150.0;
+        return MediaQuery.of(context).size.height - 150;
     }
   }
 }
