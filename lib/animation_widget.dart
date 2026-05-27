@@ -386,7 +386,7 @@ class AnimatedToastWidgetState extends State<AnimatedToastWidget>
       case ToastType.warning:
         return Icons.warning_amber_rounded;
       case ToastType.error:
-        return Icons.error_outline_rounded;
+        return Icons.cancel_outlined;
       case ToastType.success:
         return Icons.check_circle_outline_rounded;
     }

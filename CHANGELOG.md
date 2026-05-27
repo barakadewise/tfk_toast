@@ -22,4 +22,6 @@ add more toast properties
 
 - Version 0.2.5
 
-  fix old version compitatbility to compitable with new vrsion without breaking
+  . fix old version compitatbility to compitable with new vrsion without breaking
+  . improved toast UI based on devs feedback
+  . enhanced the toast UX with developer friendly customizations.

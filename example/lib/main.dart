@@ -85,7 +85,7 @@ class GlobalToastPage extends StatelessWidget {
                   "This toast uses global",
                   title: "Global Toast",
                   position: ToastPosition.top,
-                  type: ToastType.error,
+                  type: ToastType.info,
                 );
               },
               child: const Text("Top Toast (Global)"),

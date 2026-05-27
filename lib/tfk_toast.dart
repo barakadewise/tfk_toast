@@ -4,9 +4,6 @@ import 'package:tfk_toast/animation_widget.dart';
 import 'package:tfk_toast/enum.dart';
 import 'package:tfk_toast/toast_queue.dart';
 
-import 'dart:collection';
-import 'package:flutter/material.dart';
-
 /// ======================================================
 /// TfkToast
 ///
@@ -170,11 +167,20 @@ class TfkToast {
 
     overlay.insert(overlayEntry);
 
+    // Capture the overlay reference now
+    //to avoid use_build_context_synchronously warnings.
+
     Future.delayed(toast.duration, () {
       if (_isToastActive) {
-        overlayEntry.remove();
+        //overlayEntry is captured by closure, no BuildContext used
+        // after the async gap (fixes use_build_context_synchronously).
+        try {
+          overlayEntry.remove();
+        } catch (_) {
+          // Entry may have already been removed by the close button.
+        }
         _isToastActive = false;
-        _showNextToast(context);
+        _showNextToast(null); // No context needed; falls back to navigatorKey.
       }
     });
   }
