@@ -8,22 +8,22 @@ import 'package:tfk_toast/tfk_toast.dart';
 // 1. SETUP WITH MATERIAL APP
 // ======================================================
 
-void main() {
-  runApp(const MyApp());
-}
+// void main() {
+//   runApp(const MyApp());
+// }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      // Attach navigator key for global toast support
-      navigatorKey: TfkToast.navigatorKey,
-      home: const GlobalToastPage(),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       // Attach navigator key for global toast support
+//       navigatorKey: TfkToast.navigatorKey,
+//       home: const GlobalToastPage(),
+//     );
+//   }
+// }
 
 ///initilization with go route
 // ======================================================
@@ -82,10 +82,10 @@ class GlobalToastPage extends StatelessWidget {
             ElevatedButton(
               onPressed: () {
                 TfkToast.showToast(
-                  "This toast uses global navigatorKey only",
+                  "This toast uses global",
                   title: "Global Toast",
                   position: ToastPosition.top,
-                  type: ToastType.info,
+                  type: ToastType.error,
                 );
               },
               child: const Text("Top Toast (Global)"),

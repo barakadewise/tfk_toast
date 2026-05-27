@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:tfk_toast/enum.dart';
 
@@ -62,36 +63,40 @@ class AnimatedToastWidgetState extends State<AnimatedToastWidget>
   late Animation<double> _zoomAnimation;
   late Animation<double> _wobbleAnimation;
 
+  // Icon entrance animations
+  late Animation<double> _iconScaleAnim;
+  late Animation<double> _iconOpacityAnim;
+
   @override
   void initState() {
     super.initState();
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
-      reverseDuration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 420),
+      reverseDuration: const Duration(milliseconds: 280),
     );
 
     if (widget.animation == ToastAnimation.slide) {
       _slideAnimation = Tween<Offset>(
-        begin: const Offset(0, -0.5),
+        begin: const Offset(0.15, -0.4),
         end: Offset.zero,
       ).animate(CurvedAnimation(
         parent: _controller,
-        curve: Curves.easeOut,
+        curve: Curves.easeOutCubic,
       ));
     } else if (widget.animation == ToastAnimation.fade) {
       _fadeAnimation = CurvedAnimation(
         parent: _controller,
-        curve: Curves.easeIn,
+        curve: const Interval(0.0, 0.75, curve: Curves.easeOut),
       );
     } else if (widget.animation == ToastAnimation.scale) {
       _scaleAnimation = Tween<double>(
-        begin: 0.5,
+        begin: 0.72,
         end: 1.0,
       ).animate(CurvedAnimation(
         parent: _controller,
-        curve: Curves.easeOut,
+        curve: Curves.easeOutBack,
       ));
     } else if (widget.animation == ToastAnimation.bounce) {
       _bounceAnimation = Tween<double>(
@@ -99,23 +104,23 @@ class AnimatedToastWidgetState extends State<AnimatedToastWidget>
         end: 1.0,
       ).animate(CurvedAnimation(
         parent: _controller,
-        curve: Curves.bounceOut,
+        curve: Curves.elasticOut,
       ));
     } else if (widget.animation == ToastAnimation.rotate) {
       _rotateAnimation = Tween<double>(
-        begin: -0.5,
+        begin: -0.08,
         end: 0.0,
       ).animate(CurvedAnimation(
         parent: _controller,
-        curve: Curves.easeInOut,
+        curve: Curves.easeOutCubic,
       ));
     } else if (widget.animation == ToastAnimation.zoom) {
       _zoomAnimation = Tween<double>(
-        begin: 0.5,
+        begin: 0.60,
         end: 1.0,
       ).animate(CurvedAnimation(
         parent: _controller,
-        curve: Curves.easeInOut,
+        curve: Curves.easeOutBack,
       ));
     }
 
@@ -128,6 +133,20 @@ class AnimatedToastWidgetState extends State<AnimatedToastWidget>
         curve: Curves.elasticOut,
       ));
     }
+
+    // Icon pops in slightly after the toast body settles
+    _iconScaleAnim = Tween<double>(begin: 0.3, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.25, 0.85, curve: Curves.easeOutBack),
+      ),
+    );
+    _iconOpacityAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.2, 0.65, curve: Curves.easeOut),
+      ),
+    );
 
     _controller.forward();
 
@@ -148,15 +167,34 @@ class AnimatedToastWidgetState extends State<AnimatedToastWidget>
 
   @override
   Widget build(BuildContext context) {
+    // Surface is always the solid accent — original style fully preserved.
+    // All icon/badge/text tones are derived from white-over-color so they
+    // adapt automatically to any custom backgroundColor.
+    final surfaceColor = widget.backgroundColor ?? _getBackgroundColor();
+
     Widget toastContent = GestureDetector(
       onTap: widget.onTap,
       child: Container(
         padding: widget.padding ??
-            const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+            const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         decoration: BoxDecoration(
-          color: widget.backgroundColor ?? _getBackgroundColor(),
+          color: surfaceColor,
           borderRadius: BorderRadius.circular(widget.borderRadius),
           boxShadow: [
+            // Soft ambient lift
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.16),
+              blurRadius: 20,
+              spreadRadius: 0,
+              offset: const Offset(0, 6),
+            ),
+            // Coloured underglow — adapts to surfaceColor automatically
+            BoxShadow(
+              color: surfaceColor.withValues(alpha: 0.45),
+              blurRadius: 16,
+              spreadRadius: -4,
+              offset: const Offset(0, 6),
+            ),
             if (widget.elevation > 0)
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.2),
@@ -168,8 +206,42 @@ class AnimatedToastWidgetState extends State<AnimatedToastWidget>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (widget.icon != null) widget.icon!,
-            if (widget.icon != null) const SizedBox(width: 8.0),
+            // ── Icon badge ─────────────────────────────────────────────
+            // Shown when icon is provided OR always as a type-default fallback.
+            // Background and icon color are white-relative so they work on
+            // any surfaceColor — whether the default blues/greens or a custom hue.
+            ScaleTransition(
+              scale: _iconScaleAnim,
+              child: FadeTransition(
+                opacity: _iconOpacityAnim,
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    // White overlay on the solid surface — self-adapts to any color
+                    color: Colors.white.withValues(alpha: 0.20),
+                    borderRadius: BorderRadius.circular(9),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.28),
+                      width: 1.0,
+                    ),
+                  ),
+                  child: Center(
+                    child: widget.icon ??
+                        Icon(
+                          _getDefaultIcon(),
+                          // Always white — readable on any backgroundColor
+                          color: Colors.white,
+                          size: 19,
+                        ),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 12.0),
+
+            // ── Text content ───────────────────────────────────────────
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,26 +260,52 @@ class AnimatedToastWidgetState extends State<AnimatedToastWidget>
                   Text(
                     widget.message,
                     style: widget.messageStyle ??
-                        const TextStyle(
-                          color: Colors.white,
+                        TextStyle(
+                          color: Colors.white.withValues(alpha: 0.88),
                           fontSize: 14.0,
+                          height: 1.4,
                         ),
                   ),
-                  // Check if it's a progress toast
+                  // ── Progress bar ──────────────────────────────────
                   if (widget.isProgress)
                     Padding(
-                      padding: const EdgeInsets.only(
-                          top: 8.0), // Add padding for the progress bar
+                      padding: const EdgeInsets.only(top: 8.0),
                       child: SizedBox(
-                        width: double.infinity, // Full width of the toast
+                        width: double.infinity,
                         child: AnimatedBuilder(
                           animation: _controller,
                           builder: (context, child) {
-                            return LinearProgressIndicator(
-                              value: _controller.value, // Animate the progress
-                              backgroundColor: Colors.grey[300],
-                              color:
-                                  _getBackgroundColor(), // Use the toast's color
+                            return Stack(
+                              children: [
+                                // Track
+                                Container(
+                                  height: 3.0,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.22),
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                                // Fill with glowing leading edge
+                                FractionallySizedBox(
+                                  widthFactor: _controller.value,
+                                  child: Container(
+                                    height: 3.0,
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.90),
+                                      borderRadius: BorderRadius.circular(2),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.55),
+                                          blurRadius: 5,
+                                          offset: const Offset(0, 0),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             );
                           },
                         ),
@@ -216,16 +314,30 @@ class AnimatedToastWidgetState extends State<AnimatedToastWidget>
                 ],
               ),
             ),
+
+            // ── Close button ──────────────────────────────────────────
             if (widget.showCloseIcon)
-              IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
-                onPressed: () {
+              GestureDetector(
+                onTap: () {
                   if (mounted) {
                     _controller.reverse().then((_) {
                       if (mounted) widget.onRemove();
                     });
                   }
                 },
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(
+                    Icons.close_rounded,
+                    size: 15.0,
+                    color: Colors.white.withValues(alpha: 0.75),
+                  ),
+                ),
               ),
           ],
         ),
@@ -250,9 +362,11 @@ class AnimatedToastWidgetState extends State<AnimatedToastWidget>
         return AnimatedBuilder(
           animation: _wobbleAnimation,
           builder: (context, child) {
-            final value = _wobbleAnimation.value;
+            final raw = _wobbleAnimation.value;
+            // Damped sine — physically realistic settling shake
+            final damped = raw * math.sin(raw * 0.3) * 0.4;
             return Transform.translate(
-              offset: Offset(value, 0),
+              offset: Offset(damped, 0),
               child: child,
             );
           },
@@ -261,6 +375,20 @@ class AnimatedToastWidgetState extends State<AnimatedToastWidget>
       // case ToastAnimation.none:
       default:
         return toastContent;
+    }
+  }
+
+  // ── Default icons per toast type ─────────────────────────────────────────
+  IconData _getDefaultIcon() {
+    switch (widget.type) {
+      case ToastType.info:
+        return Icons.info_outline_rounded;
+      case ToastType.warning:
+        return Icons.warning_amber_rounded;
+      case ToastType.error:
+        return Icons.error_outline_rounded;
+      case ToastType.success:
+        return Icons.check_circle_outline_rounded;
     }
   }
 

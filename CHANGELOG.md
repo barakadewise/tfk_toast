@@ -19,3 +19,7 @@ add more toast properties
 - Version 0.2.4
 
   fixing bugs
+
+- Version 0.2.5
+
+  fix old version compitatbility to compitable with new vrsion without breaking
